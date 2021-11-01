@@ -1,0 +1,159 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `brfss2013`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+The assumptions below were built on the brfss2013 dataset, which is a big dataset collected by surveying random people accross the united states. Because of that, this assumptions can be generalized for at least all the United States.
+
+We can not make assumptions of causality, we can only talk about correlation so all the hypothesis below are referring to correlation by the word "relationship".
+
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1: Does the sleep time follow a normal distrubution ?**
+
+**Research quesion 2: Is there a difference for smokers?**
+
+**Research quesion 3: Is there a relationship between income and poor health?**
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button (green button with orange arrow) above. Make sure that your code is visible
+in the project you submit. Delete this note when before you submit your work.
+
+**Research quesion 1:**
+
+```{r}
+
+brfss2013 %>% ggplot(aes(x=sleptim1)) + geom_histogram(binwidth = 1)  + xlim(2,12) + labs(title="Histogram of sleeptime",x="Number of hours slept per day") 
+
+```
+
+It looks like it has a distrubution that looks a lot like a normal distrubution but a little left-skewed.
+
+This can be generalized to the whole united states.
+
+
+
+```{r}
+
+mean(brfss2013$sleptim1,na.rm = TRUE)
+
+```
+
+An average person sleeps 7.052 hours a day.
+
+```{r}
+
+sd(brfss2013$sleptim1,na.rm = TRUE)
+
+```
+
+and the standard deviation of sleep time per day is 1.604.
+
+So we can create a normal distribution with this values and compare it with the original.
+
+```{r}
+
+hours_sleep <- seq(2,12,by=1)
+
+
+percentage <- dnorm(hours_sleep,mean=mean(brfss2013$sleptim1,na.rm=TRUE),sd=sd(brfss2013$sleptim1,na.rm=TRUE))
+
+plot(hours_sleep,percentage)
+
+```
+
+
+**The percentage value here stands for the percentage of people sleeps given number of hours.** 
+
+And, any assumption based on this distribution would be very close to the reality in the United States.
+
+
+
+**Research quesion 2:**
+
+```{r}
+smokers <- brfss2013 %>% filter(usenow3 != "Not at all")
+```
+
+First, we filter the non-smokers from our data to work especially on the smokers.
+
+
+```{r}
+smokers %>% ggplot(aes(x=sleptim1)) + geom_histogram(binwidth=1) + xlim(2,12) + labs(title="Histogram of sleeptime (smokers)",x="Number of hours slept per day") 
+```
+
+By comparing the this plot and the one we created in the beginning, we can see that there is a little difference between the sleep times of smokers in general. Their distribution seems less left skewed. We can say that a big portion of people sleep less than the average are smokers.
+
+To be more clear, lets see the average and the standard deviation, then generate a normal distribution with those variables.
+
+```{r}
+
+mean(smokers$sleptim1,na.rm = TRUE)
+
+```
+
+Average sleep time of a smoker is 6.876 (general average was 7.05)
+
+```{r}
+
+sd(smokers$sleptim1,na.rm = TRUE)
+
+```
+
+Standard deviation is 1.589 (general standard deviation was 1.604)
+
+
+```{r}
+percentage <- dnorm(hours_sleep,mean=mean(smokers$sleptim1,na.rm=TRUE),sd=sd(smokers$sleptim1,na.rm=TRUE))
+
+plot(hours_sleep,percentage)
+
+```
+
+As it can be easier to see from this plot, the difference between the smokers and the general is not too great.
+
+
+**Research question 3:**
+
+```{r}
+brfss2013 %>% filter(!is.na(income2)) %>% ggplot(aes(x=income2,y=poorhlth)) + geom_boxplot() + ylim(0,30) + labs(title="Boxplot of income(x axis) and poor health(y axis)" , x="Income Level" , y="number of days felt poor health in the last month")
+```
+
+From the plot above, we can easily see that people with less income tend to have poor health more than the people with higher income. Especially below $15 000 threshold. After that, the median value gets closer to the zero and the 75th percentile falls down.
+
